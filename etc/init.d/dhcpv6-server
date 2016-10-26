@@ -1,0 +1,122 @@
+#!/bin/sh
+#
+# $Id: dhcpv6-server.init.d,v 1.4 2003/07/13 19:12:41 mdz Exp $
+#
+
+### BEGIN INIT INFO
+# Provides:          dhcpv6-server
+# Required-Start:    $remote_fs $network $syslog
+# Required-Stop:     $remote_fs $network $syslog
+# Should-Start:      $local_fs slapd
+# Should-Stop:       $local_fs slapd
+# Default-Start:     2 3 4 5
+# Default-Stop:      1
+# Short-Description: DHCP server
+# Description:       Dynamic Host Configuration Protocol Server
+### END INIT INFO
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+# Default config file
+CONFIG_FILE=/etc/dhcp3/dhcpdv6.conf
+
+test -f /usr/sbin/dhcpd || exit 0
+
+# It is not safe to start if we don't have a default configuration...
+if [ ! -f /etc/default/dhcpv6-server ]; then
+	echo "/etc/default/dhcpv6-server does not exist! - Aborting..."
+	echo "Run 'dpkg-reconfigure dhcpv6-server' to fix the problem."
+	exit 0
+fi
+
+. /lib/lsb/init-functions
+
+# Read init script configuration (so far only interfaces the daemon
+# should listen on.)
+[ -f /etc/default/dhcpv6-server ] && . /etc/default/dhcpv6-server
+
+NAME=dhcpdv6
+DESC="IPv6 DHCP server"
+DHCPDPID=/var/run/dhcpv6-server/dhcpd.pid
+DB=/var/db
+
+test_config()
+{
+	if ! /usr/sbin/dhcpd -6 -t -q -cf $CONFIG_FILE > /dev/null 2>&1; then
+		echo "dhcpd self-test failed. Please fix the config file."
+		echo "The error was: "
+		/usr/sbin/dhcpd -6 -t -cf $CONFIG_FILE
+		exit 1
+	fi
+}
+
+# single arg is -v for messages, -q for none
+check_status()
+{
+    if [ ! -r "$DHCPDPID" ]; then
+	test "$1" != -v || echo "$NAME is not running."
+	return 3
+    fi
+    if read pid < "$DHCPDPID" && ps -p "$pid" > /dev/null 2>&1; then
+	test "$1" != -v || echo "$NAME is running."
+	return 0
+    else
+	test "$1" != -v || echo "$NAME is not running but $DHCPDPID exists."
+	return 1
+    fi
+}
+
+case "$1" in
+	start)
+		test_config
+		log_daemon_msg "Starting $DESC" "$NAME"
+
+		# allow dhcp server to write lease and pid file
+		mkdir -p /var/run/dhcpv6-server
+		chown dhcpd:dhcpd /var/run/dhcpv6-server
+		[ -e $DB/dhcpd.leases ] || touch $DB/dhcpd.leases
+		chown dhcpd:dhcpd /var/lib/dhcp3 $DB/dhcpd.leases
+		if [ -e $DB/dhcpd.leases~ ]; then
+		    chown dhcpd:dhcpd $DB/dhcpd.leases~
+		fi
+
+		#echo start-stop-daemon --start --quiet --pidfile $DHCPDPID \
+		#	--exec /usr/sbin/dhcpd -- -q -pf $DHCPDPID -6 -cf $CONFIG_FILE  $INTERFACES
+		start-stop-daemon --start --quiet --pidfile $DHCPDPID \
+			--exec /usr/sbin/dhcpd -- -q -6 -pf $DHCPDPID -cf $CONFIG_FILE  $INTERFACES
+		sleep 1
+
+		if check_status -q; then
+			log_end_msg 0
+		else
+			log_failure_msg "check syslog for diagnostics."
+			log_end_msg 1
+			exit 1
+		fi
+		;;
+	stop)
+		log_daemon_msg "Stopping $DESC" "$NAME"
+		start-stop-daemon --stop --quiet --pidfile $DHCPDPID
+		log_end_msg $?
+		rm -f "$DHCPDPID"
+		;;
+	restart | force-reload)
+		test_config
+		$0 stop
+		sleep 1
+		$0 start
+		if [ "$?" != "0" ]; then
+			exit 1
+		fi
+		;;
+	status)
+		echo -n "Status of $DESC: "
+		check_status -v
+		exit "$?"
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart|force-reload|status}"
+		exit 1 
+esac
+
+exit 0

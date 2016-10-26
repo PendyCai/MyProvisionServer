@@ -1,0 +1,17 @@
+;
+; BIND reverse data file for local loopback interface
+;
+$TTL	604800
+@	IN	SOA	ns.sdtpktc.com. root.localhost. (
+			    111		; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+;
+@	IN	NS	ns.sdtpktc.com.
+
+;EMTA DQDN REV
+200	IN	PTR	mta200.sdtpktc.com
+201	IN	PTR	mta201.sdtpktc.com
+202	IN	PTR	mta202.sdtpktc.com

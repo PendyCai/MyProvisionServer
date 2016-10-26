@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# rfc868_timerserver - Script to launch rfc868 time server.
+#
+### BEGIN INIT INFO
+# Provides:          rfc868_timeserver
+# Required-Start:    $syslog $network
+# Required-Stop:     $syslog $network
+# Should-Start:      $local_fs
+# Should-Stop:       $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Launch rfc868 time server
+# Description:       Launch rfc868 time server, assign time stamp to CableModems
+#                    in HFC network.
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+RFC868_Dir=/tmp
+RFC868_TimeServer=rfc868_ipv6_srv
+RFC868_TsLog=$RFC868_Dir/rfc868_timeserver_log.log
+#PATH=$PATH:$RFC868_Dir
+#echo "Rfc868 Timeserver step in.." >> /home/pendy/test_tod.log
+
+#test -f "$RFC868_Dir/$RFC868_TimeServer" || exit 0
+#echo "Rfc868 Timeserver step in.." >> /home/pendy/test_tod.log
+
+#PID=`ps -e| grep $RFC868_TimeServer | awk '{print $1}'`
+PID=`pgrep $RFC868_TimeServer`
+#echo "Rfc868 Timeserver step in.." >> /home/pendy/test_tod.log
+
+case $1 in
+start)
+	if [ "$PID" != "" ]; then
+		echo "Already running ....."
+#		exit 1
+	fi
+	$RFC868_TimeServer > $RFC868_TsLog &
+	echo "RFC868 Timerserver is running...."
+	;;
+stop)
+	if [ "$PID" != "" ]; then
+		kill $PID && kill -9 $PID
+		echo "RFC868 Timeserver stop.."
+	fi
+	;;
+restart|reload)
+	if [ "$PID" != "" ]; then
+                kill $PID && kill -9 $PID
+		echo "Rfc868 Timeserver stop.."
+        fi
+	$RFC868_TimeServer > $RFC868_TsLog &
+	echo "Rfc868 Timeserver is running."
+	;;
+*)
+	echo "Usage : $0 {start|stop|restart|help}"
+	;;
+
+esac
+
+
+exit 0

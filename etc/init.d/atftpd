@@ -1,0 +1,88 @@
+#! /bin/sh
+#
+# atftpd - Script to launch atftpd server.
+#
+### BEGIN INIT INFO
+# Provides:          atftpd
+# Required-Start:    $syslog $network
+# Required-Stop:     $syslog $network
+# Should-Start:      $local_fs
+# Should-Stop:       $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Launch atftpd server
+# Description:       Launch atftpd server, a TFTP server useful
+#                    for network boot (PXE).
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/local/bin/atftpd
+DAEMONv6=/usr/local/bin/atftpd.v6
+NAME=atftpd
+DESC="Advanced TFTP server"
+#USE_INETD=true
+USE_INETD=false
+OPTIONS=""
+OPTIONSv6=""
+
+test -f $DAEMON || exit 0
+test -f $DAEMONv6 || exit 0
+
+set -e
+
+if [ -f /etc/default/atftpd ]; then
+    . /etc/default/atftpd
+fi
+
+if [ "$USE_INETD" = "true" ]; then
+    exit 0;
+fi
+
+# Make sure we have --daemon when not using inetd
+echo "$OPTIONS"|grep -q -- --daemon || OPTIONS="--daemon $OPTIONS"
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+	start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- $OPTIONS
+
+	[ $ATFTPD_V6 -eq 1 ] && \
+		start-stop-daemon --start --oknodo --quiet --exec $DAEMONv6 -- $OPTIONSv6
+
+	echo "$NAME."
+	;;
+  stop)
+	echo -n "Stopping $DESC: "
+	start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+
+	[ $ATFTPD_V6 -eq 1 ] && \
+		start-stop-daemon --stop --oknodo --quiet --exec $DAEMONv6
+
+	[ -f "$log_file" ] && rm -rf $log_file >/dev/null
+	[ -f "$log_file.v6" ] && rm -rf $log_file.v6 >/dev/null
+
+	echo "$NAME."
+	;;
+  restart|reload|force-reload)
+	echo -n "Restarting $DESC: "
+	start-stop-daemon --stop --oknodo --quiet --exec $DAEMON
+
+	[ $ATFTPD_V6 -eq 1 ] && \
+		start-stop-daemon --stop --oknodo --quiet --exec $DAEMONv6
+
+	sleep 1
+	start-stop-daemon --start --oknodo --quiet --exec $DAEMON -- $OPTIONS
+
+	[ $ATFTPD_V6 -eq 1 ] && \
+		start-stop-daemon --start --oknodo --quiet --exec $DAEMONv6 -- $OPTIONSv6
+
+	echo "$NAME."
+	;;
+  *)
+	N=/etc/init.d/$NAME
+        echo "Usage: $N {start|stop|restart|reload|force-reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

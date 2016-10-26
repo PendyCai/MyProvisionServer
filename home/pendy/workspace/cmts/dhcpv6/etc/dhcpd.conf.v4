@@ -1,0 +1,757 @@
+#
+# Sample configuration file for ISC dhcpd for Debian
+#
+# Attention: If /etc/ltsp/dhcpd.conf exists, that will be used as
+# configuration file instead of this file.
+#
+# $Id: dhcpd.conf,v 1.1.1.1 2002/05/21 00:07:44 peloy Exp $
+#
+
+# The ddns-updates-style parameter controls whether or not the server will
+# attempt to do a DNS update when a lease is confirmed. We default to the
+# behavior of the version 2 packages ('none', since DHCP v2 didn't
+# have support for DDNS.)
+ddns-update-style none;
+
+# option definitions common to all supported networks...
+option domain-name "skyvoip.com";
+#option domain-name-servers ns1.skyvoip.com, ns2.skyvoip.com;
+option domain-name-servers 192.168.10.220;
+
+default-lease-time      43200;
+max-lease-time          43200;
+next-server             192.168.10.220;
+option routers          192.168.10.220;
+option log-servers      192.168.10.220;
+option time-servers     192.168.10.220;
+
+#option-122 for EMTA
+option option-122 code 122 = string;
+
+#option--43 for CM SW version
+option space vsi;
+option vsi.version code 6 = string;
+option vsi.model code 9 = string;
+option vsi.model_other code 201 = string;
+option vsi.version_other code 202 = string;
+option vsi-pkt code 43 = encapsulate vsi;
+
+# If this DHCP server is the official DHCP server for the local
+# network, the authoritative directive should be uncommented.
+authoritative;
+
+# Use this to send dhcp log messages to a different log file (you also
+# have to hack syslog.conf to complete the redirection).
+log-facility local7;
+
+# No service will be given on this subnet, but declaring it helps the 
+# DHCP server to understand the network topology.
+####### DHCP on 192.168.10.0/24 subnet ###########
+subnet 192.168.10.0 netmask 255.255.255.0 {
+} # end subnet
+
+# This is a very basic subnet declaration.
+
+#subnet 10.254.239.0 netmask 255.255.255.224 {
+#  range 10.254.239.10 10.254.239.20;
+#  option routers rtr-239-0-1.example.org, rtr-239-0-2.example.org;
+#}
+
+# This declaration allows BOOTP clients to get dynamic addresses,
+# which we don't really recommend.
+
+#subnet 10.254.239.32 netmask 255.255.255.224 {
+#  range dynamic-bootp 10.254.239.40 10.254.239.60;
+#  option broadcast-address 10.254.239.31;
+#  option routers rtr-239-32-1.example.org;
+#}
+
+# A slightly different configuration for an internal subnet.
+#subnet 10.5.5.0 netmask 255.255.255.224 {
+#  range 10.5.5.26 10.5.5.30;
+#  option domain-name-servers ns1.internal.example.org;
+#  option domain-name "internal.example.org";
+#  option routers 10.5.5.1;
+#  option broadcast-address 10.5.5.31;
+#  default-lease-time 600;
+#  max-lease-time 7200;
+#}
+
+# Hosts which require special configuration options can be listed in
+# host statements.   If no address is specified, the address will be
+# allocated dynamically (if possible), but the host-specific information
+# will still come from the host declaration.
+
+#host passacaglia {
+#  hardware ethernet 0:0:c0:5d:bd:95;
+#  filename "vmunix.passacaglia";
+#  server-name "toccata.fugue.com";
+#}
+
+# Fixed IP addresses can also be specified for hosts.   These addresses
+# should not also be listed as being available for dynamic assignment.
+# Hosts for which fixed IP addresses have been specified can boot using
+# BOOTP or DHCP.   Hosts for which no fixed address is specified can only
+# be booted with DHCP, unless there is an address range on the subnet
+# to which a BOOTP client is connected which has the dynamic-bootp flag
+# set.
+#host fantasia {
+#  hardware ethernet 08:00:07:26:c0:a5;
+#  fixed-address fantasia.fugue.com;
+#}
+
+# You can declare a class of clients and then do address allocation
+# based on that.   The example below shows a case where all clients
+# in a certain class get addresses on the 10.17.224/24 subnet, and all
+# other clients get addresses on the 10.0.29/24 subnet.
+
+#class "foo" {
+#  match if substring (option vendor-class-identifier, 0, 4) = "SUNW";
+#}
+
+#shared-network 224-29 {
+#  subnet 10.17.224.0 netmask 255.255.255.0 {
+#    option routers rtr-224.example.org;
+#  }
+#  subnet 10.0.29.0 netmask 255.255.255.0 {
+#    option routers rtr-29.example.org;
+#  }
+#  pool {
+#    allow members of "foo";
+#    range 10.17.224.10 10.17.224.250;
+#  }
+#  pool {
+#    deny members of "foo";
+#    range 10.0.29.10 10.0.29.230;
+#  }
+#}
+##### For Spec CMs Teset ###################
+group PacketCable_CMs {
+#    option option-122       01:04:c0:a8:0a:ca;         # sub-opt 1, DHCP Serv= 192.168.10.202
+
+    host cm_bpi_test {
+        hardware ethernet        00:1a:9a:70:19:c1;
+        fixed-address            10.10.5.48;
+        #filename                 "XiaMen/bas20bandwith.cfg";
+        #filename                 "moto_cvc_7019.cfg";
+        #filename                 "signed_cm_ecram_sto_test.cfg";
+        #filename                 "d30_bpi.bin";
+        # filename                "test_1cpe.bin";
+         filename               "moto_2cpe.cfg";   
+        #filename                 "d30-CpeAccess-Cvc.bin";
+    }
+    host cm_bpi_test_01 {
+        hardware ethernet        00:1a:9a:cf:ba:87;
+        fixed-address            10.10.5.187;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_02 {
+	hardware ethernet        00:1a:9a:cf:ba:86;
+        fixed-address            10.10.5.186;
+        #filename                 "moto_bpi.cfg";
+        filename                 "XiaMen/test_bpi_rekeytime.bin";
+    }
+    host cm_bpi_test_03 {
+        hardware ethernet        00:1a:9a:cf:ba:85;
+        fixed-address            10.10.5.185;
+        filename                 "XiaMen/test_bpi_rekeytime.bin";
+        #filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_04 {
+        hardware ethernet        00:1a:9a:cf:ba:84;
+        fixed-address            10.10.5.184;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_05 {
+        hardware ethernet        00:1a:9a:cf:ba:7f;
+        fixed-address            10.10.5.183;
+        filename                 "PhyBasic3_0_SNMPenabled.cfg";
+    }
+    host cm_bpi_test_23 {
+        hardware ethernet        00:1a:9a:cf:ba:76;
+        fixed-address            10.10.5.174;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_25 {
+        hardware ethernet        00:1a:9a:cf:ba:73;
+        fixed-address            10.10.5.173;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_26 {
+        hardware ethernet        00:1a:9a:cf:ba:72;
+        fixed-address            10.10.5.172;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_27 {
+        hardware ethernet        00:1a:9a:cf:ba:71;
+        fixed-address            10.10.5.171;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_28 {
+        hardware ethernet        00:1a:9a:cf:ba:70;
+        fixed-address            10.10.5.170;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_06 {
+        hardware ethernet        00:1a:9a:dc:4d:09;
+        fixed-address            10.10.5.182;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_07 {
+        hardware ethernet        00:1a:9a:dc:4d:0c;
+        fixed-address            10.10.5.181;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_08 {
+        hardware ethernet        00:1a:9a:dc:4d:0b;
+        fixed-address            10.10.5.180;
+        filename                 "moto_bpi.cfg";
+        #filename                 "CM_UPGRADE_SKYW55E1.cfg";
+        #filename                 "PhyBasic3_0_SNMPenabled.cfg";
+        #filename                 "CM_UPGRADE_SKYW55E1-MAC-14.cfg";
+        #filename                 "CM_UPGRADE_SKYW55E1-TestEDRCA-BPI-23.cfg";
+        #filename                 "CM_UPGRADE_SKYW55E1-TestEDRCA.cfg";
+    }
+    host cm_bpi_test_09 {
+        hardware ethernet        00:1a:9a:dc:4d:0e;
+        fixed-address            10.10.5.179;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_bpi_test_10 {
+        hardware ethernet        00:1a:9a:dc:4d:10;
+        fixed-address            10.10.5.178;
+        filename                 "JH_QOS_FLT_shequ_mod_bpi.cfg";
+    }
+    host cm_bpi_test_11 {
+        #hardware ethernet        00:1a:9a:dc:4d:11;
+        hardware ethernet        5c:c6:d0:8f:8f:fd;
+        fixed-address            10.10.5.177;
+        filename                 "moto_bpi.cfg";
+    }
+    host cm_no_cvc_test {
+        hardware ethernet        00:1a:9a:70:19:c2;
+        fixed-address            10.10.5.49;
+        filename                 "moto_none_cvc.cfg";
+    }
+    host cm_cvc_test {
+        hardware ethernet        00:1a:9a:70:19:c3;
+        fixed-address            10.10.5.51;
+        #filename                 "moto_us_cvc.cfg";
+        filename                 "d30.bin";
+    }
+    host cm_moto {
+        hardware ethernet        00:1a:ad:84:78:be;
+        fixed-address            10.10.5.54;
+        #filename                 "moto_cvc_7019.cfg";
+        filename                 "d30.bin";
+    }
+    host cm_XiaMen_Test {
+        hardware ethernet        00:1a:9a:11:10:25;
+        fixed-address            10.10.5.142;
+        filename                 "XiaMen/arris7.bin";
+    }
+    host cm_XiaMen_Test_shaping_7019 {
+        hardware ethernet        00:1a:9a:70:19:31;
+        fixed-address            10.10.5.96;
+        filename                 "JH_QOS_FLT_shequ_mod.cfg";
+    }
+    host cm_XiaMen_Test_shaping_ti {
+        #hardware ethernet        00:05:ca:97:89:B9;
+        #fixed-address            10.10.5.97;
+        #filename                 "JH_QOS_FLT_shequ_mod.cfg";
+    }
+    host cm_XiaMen_Test_shaping_3349 {
+        hardware ethernet        00:1a:9a:dc:4d:09;
+        fixed-address            10.10.5.98;
+        filename                 "JH_QOS_FLT_shequ_mod.cfg";
+    }
+    host cm_XiaMen_Test_shaping_bcm {
+        hardware ethernet        00:10:18:49:1d:7b;
+        fixed-address            10.10.5.99;
+        filename                 "JH_QOS_FLT_shequ_mod.cfg";
+    }
+    host cm_test_2_cpe {
+        hardware ethernet        5c:c6:d0:17:32:f1;
+        fixed-address            10.10.5.79;
+        filename                 "moto_2cpe.cfg";
+    }
+    host wifi_test_host {
+        hardware ethernet        5c:c6:d0:19:98:e9;
+        fixed-address            10.10.5.163;
+        filename                 "moto.cfg";
+    }
+    host wifi_test_host_3 {
+        hardware ethernet        5c:c6:d0:17:33:12;
+        fixed-address            10.10.5.165;
+        filename                 "moto.cfg";
+    }
+     host cm440_test_upg_1 {
+        hardware ethernet        a0:89:e4:03:2e:3f;
+        filename                 "cm440_D30_upg.cm";
+    }
+  
+     host cm4100_test_1 {
+        hardware ethernet        a0:89:e4:f0:51:a1;
+        filename                 "C54EE6AF";
+        default-lease-time 300;
+        max-lease-time 7200;    
+}
+
+     host cm4100_test_2 {
+        #
+        #hardware ethernet        a0:89:e4:05:9f:6b;
+       hardware ethernet        a0:89:e4:05:9f:60;
+	 filename 	  "cm_d30_snmp_test.cfg";
+	#filename                 "moto.cfg";
+      #filename 		  "cm440_D30_upg.cm";
+	default-lease-time 480;
+        max-lease-time 7200;
+
+    }
+    host ti_cm_test_cvc {
+	hardware ethernet       00:c5:0a:99:e1:42;
+	fixed-address		10.10.5.231;
+	#filename		"moto.cfg";
+        filename                 "moto_cvc_ti4600.cfg";
+        #filename                 "iav.bin";
+
+    }
+    host ti_cm_test_AnnexB_Upg00 {
+	hardware ethernet       00:3a:9a:70:19:cc;
+	#fixed-address		10.10.5.231;
+        filename                 "basic_d30_upg_AnnexB.cfg";
+    }
+    host ti_cm_test_AnnexB_Upg {
+	hardware ethernet       00:1a:9a:00:00:01;
+	#fixed-address		10.10.5.231;
+        #filename                 "basic_d30_upg_AnnexB.cfg";
+    }
+    host bcm_d30_test {
+        hardware ethernet        00:10:18:83:fe:d1;
+        #filename                 "basic30_bpi.cfg";
+        #filename                 "basic30.cfg";
+        #filename                 "d30.bin";
+        #filename                 "cm200mb.test";
+        #filename                 "tftp-india.cfg";
+        #filename                 "tftp-india-6088.cfg";
+        filename                 "tftp-india-256-3044.cfg";
+        #filename                 "modem-config";
+    }
+    host NO_Bpi {
+	#hardware ethernet 	 5c:c6:d0:19:c4:a4;
+	hardware ethernet 	 5c:c6:d0:19:c4:98;
+	filename		"moto.cfg";
+    }
+    host Vendor_Spec_Test {
+	hardware ethernet 	 00:88:08:95:e8:f8;
+	filename		"vendor-spec.cfg";
+    }
+    host Bpi_Test_11 {
+        hardware ethernet        a0:89:e4:00:b0:13;
+        filename                 "moto_bpi.cfg";
+    }
+    host Bpi_Test_12 {
+        hardware ethernet        5c:c6:d0:1c:29:32;
+        filename                 "baoyue6mwifi-up-220.cm";
+        #filename                 "BCM-CM-CVC-UPG.cfg";
+    }
+    host Intel_D30_Upg {
+        hardware ethernet         a2:89:e4:01:00:01;
+        filename                  "basic_d30_upg.cfg";
+    }
+    host Intel_D30_Upg_Test {
+        #hardware ethernet         a2:89:e4:01:00:02;
+        hardware ethernet         a2:89:e4:01:11:00;
+        #filename                  "basic_d30_upg_test.cfg";
+	#filename		"cm_upgrade_192.168.10.220.img";
+	#filename		"cm_upgrade_192.168.10.220(0529).cfg";
+        #filename                  "modem-conf-512000.cfg";
+        #filename                 "cm200mb.test";
+        #filename                 "cmDevNmAccess.cfg";
+	filename                  "basic_d30_upg_rtl8306.cfg";
+    }
+    host Intel_D30_Snmp_Test {
+        hardware ethernet         00:1a:9a:cf:ba:6f;
+       # filename                  "cm_d30_snmp_test.cfg";
+       #filename                  "mac14.cfg";
+	#filename "d30_bpi.bin";
+        filename                  "PhyBasic3_0_SNMPenabled.cfg";
+    }
+    host BCM3383D_D30 {
+	#hardware ethernet 	 00:1a:9a:33:83:b4;
+	hardware ethernet 	a0:89:e4:05:9f:6b;
+	#filename                "cm440_D30_upg.cm";
+	filename		"gzcatv-lineup_test.bin";
+       #filename         	 "testAcl_10.202_bad.cfg";
+        #filename                 "d30-lineup.bin";
+        #filename                 "d30.bin";
+        #filename                 "cmtest.cm";
+        #next-server       0.0.0.0
+        default-lease-time 480;
+        max-lease-time 7200;
+    }
+    host BCM3383D_D30_1 {
+	#hardware ethernet 	 a0:89:e4:00:97:e2;
+	hardware ethernet 	 00:1a:9a:33:83:26;
+	#filename		"cmtest.cm";
+	#filename		"d30-lineup.bin";
+	#filename		"testAcl_10.202.cfg";
+       # filename		"testAcl_10.202_bad.cfg";
+	#filename		"tvon_pcon_12m.cfg";
+	filename		"d30.bin";
+        #filename		"gzcatv-lineup-mid.bin";
+    }
+    host Pppoe_Cfg_test {
+	#hardware ethernet        00:1a:9a:33:83:88;
+	#hardware ethernet        a0:89:e4:01:d9:9d;
+	hardware ethernet	 5c:c6:d0:1c:bd:bb;
+	#filename                "unicom-pppoe2-bak.cfg";
+	#filename		"d30.bin";
+	filename                "test-pppoe-4.cfg";
+    }
+    host temp_b {
+        hardware ethernet        5c:c6:d0:11:22:35;
+        filename                "cm_upgrade_192.168.10.220.img";
+    }
+    host temp_a {
+        #filename                 "d30.bin";
+        #filename                 "tftp-india.cfg";
+        #filename                 "tftp-india-3044-65535.cfg";
+        #filename                 "tftp-india-6088.cfg";
+        #filename                 "basic_d30_upg_AnnexB_hathway.cfg";
+        #filename                 "cm_upgrade_192.168.10.220.img";
+        #filename                 "tftp-india-256-3044.cfg";
+        #filename                 "tftp-india-256-24352.cfg";
+        #filename                 "modem-config";
+        #filename                 "modem-config-skyworth";
+        #filename                 "modem_upg_no_cvc.cfg";
+        #filename          "baoyue6mwifi-D30-upg-220.cm";
+       #filename               "acl_test200.bin";
+       filename       "testAcl_10.202_bad.cfg";
+        #filename                  "basic_d30_upg.cfg";
+	hardware ethernet        a0:89:e4:01:9d:f5;
+    }
+    host Topway_Cm_Test {
+        filename            "Topway_Cm_upg.cfg";
+        hardware ethernet   00:1a:9a:53:6e:51;
+    }
+    host NMG_WiFi_Option60_Test {
+        #filename           "2013imbtvn-Skyworthd2.cfg";
+        filename           "2013imbtvn-Skyworthd-New.cfg";
+        hardware ethernet   a0:89:e4:64:bc:78;
+    }
+    host Test_Win_DHCP_BOOTP {
+        hardware ethernet       00:1a:9a:25:30:cc;
+    }
+    host Test_No_Cpe {
+	#filename             "0cpe";
+	filename             "d30_bpi.bin";
+	hardware ethernet      a0:89:e4:01:d9:9d;
+    }
+    host CM_Test_Upg_CM440 {
+	filename		"cmtest-intel-topway.cm";
+	#filename		"C54EE6AF.20";
+	#filename		"CandyTime-Upg5.5.10-Test-Cvc-VendorSpec.bin";
+	#filename		"CandyTime-Upg5.5.10-Test-Cvc-new.bin";
+	#filename		"d30-CpeAccess-EuroDocsis-Cvc.bin";
+	#hardware ethernet     a0:89:e4:03:2e:38;
+	hardware ethernet     a0:89:e4:03:2e:dd;
+    }
+    host CM_test_upg_CM360 {
+	filename                  "EuroDocsis-Cvc-CM360.bin";
+	hardware ethernet         a0:89:e4:a1:1a:62;
+    }
+    host Netgear_IPSV_Test {
+	filename		"gzcatv-lineup.bin";
+	hardware ethernet	8c:04:ff:cc:15:90;
+    }
+    host L2VPN_Test {
+	filename 		"2600_2M.bin";
+	hardware ethernet 	00:05:ca:97:89:b9;
+    }
+    host XinJiang_CM360_Upg {
+	filename 		"test_1cpe.bin";
+	hardware ethernet        00:1a:9a:79:19:01;
+    }
+    host Test_BeiJing_GeHua {
+        #hardware ethernet       a2:30:e4:01:4a:b2;
+        hardware ethernet       00:1a:9a:25:30:dd;
+        #hardware ethernet       00:1a:9a:4c:91:be;
+	#filename		"bpr0106001a9acbeab90001.bin";
+	#filename		"suspend_pc_istb_t1_test_ott_8m_nofrqu_122.bin";
+#	filename		"acl_test200.bin";
+	#filename		"testAcl_10.202.cfg";
+	#filename		"testAcl_10.202_bad.cfg";
+	filename		"d30.bin";
+	default-lease-time 	480;
+	max-lease-time 		480;
+    }
+    host JIangBo_test {
+        filename                "moto_2cpe.cfg";
+        hardware ethernet        a0:89:e4:e3:74:ea;
+    }
+    host Topway-CM {
+	filename		"d30.bin";
+	hardware ethernet	00:1a:9a:cf:ba:86;
+    }
+    host Topway-CM-2 {
+	#filename		"C54EE6AF.21";
+	#filename		"C54EE6AF";
+	#filename		"d30.bin";
+	filename		"cmtest_intel_topway.bin";
+	hardware ethernet 	a0:89:e4:f0:51:a2;
+    }
+    host Topway-CM-10 {
+	filename		"cmtest_intel_topway.bin";
+	hardware ethernet       00:1a:9a:33:83:cc;
+    }
+    host Topway-CM-3 {
+	filename		"C54EE6AF";
+	hardware ethernet	a0:89:e4:f1:73:0e;
+    }
+}
+##### For EMTAs(Voip) Teset ###################
+group PacketCable_MTAs {
+    option routers          10.10.6.1;
+    #option option-122       01:04:c0:a8:0a:ca;         # sub-opt 1, DHCP Serv= 192.168.10.202
+    # sub-opt 3: SNMP = provserv.brcmpkt6.com, 
+    # option option-122       .3 0 \008pactprov\008brcmpkt6\003com\000
+    # sub-opt 6: Kerberos realm name = BASIC.1
+    # option option-122       .6 \005BASIC\0011\000
+    #option option-122       03:18:00:08:70:72:6F:76:73:65:72:76:08:62:72:63:6D:70:6B:74:36:03:63:6F:6D:00:06:09:05:42:41:53:49:43:01:31:00;
+    filename "cms50-basic-2line.BIN";
+    option domain-name-servers 192.168.10.220;
+
+    host mta200 {
+        hardware ethernet        00:10:18:de:ad:06;
+        fixed-address            10.10.6.33;
+    }
+    host mta204 {
+        hardware ethernet        00:10:18:de:ae:06;
+        fixed-address            10.10.6.34;
+    }
+    host mta208 {
+        hardware ethernet        00:10:18:de:af:06;
+        fixed-address            10.10.6.35;
+    }
+    host mta50 {
+        hardware ethernet        00:1a:9a:88:66:13;
+        fixed-address            10.10.5.33;
+    }
+}
+###### For PC #################################
+group PCs {
+    option routers		192.168.10.220;
+    option domain-name-servers  192.168.10.220;
+    option broadcast-address    192.168.10.255;
+    host PC01 {
+        hardware ethernet       00:17:a4:cf:35:a5;
+        fixed-address           192.168.10.102;
+    }
+}
+##### Allow other CM/CPEs obtain IP ###########
+class "SZTV" {
+  match if substring (option vendor-class-identifier, 0, 9) = "xzcatvstb";
+  option vendor-class-identifier "xzcatvstb";
+}
+class "GCableSSID" {
+  match if substring (option vendor-class-identifier, 0, 10) = "GCableSSID";
+  option vendor-class-identifier "GCableSSID";
+}
+class "USERSSID" {
+  match if substring (option vendor-class-identifier, 0, 8) = "USERSSID";
+  option vendor-class-identifier "USERSSID";
+}
+class "CMCCSSID" {
+  match if substring (option vendor-class-identifier, 0, 8) = "CMCCSSID";
+  option vendor-class-identifier "CMCCSSID";
+}
+class "STB" {
+  match if substring (option vendor-class-identifier, 0, 3) = "STB";
+  option vendor-class-identifier "STB";
+}
+class "lygcatvstb" {
+  match if substring (option vendor-class-identifier, 0, 10) = "lygcatvstb";
+  option vendor-class-identifier "lygcatvstb";
+}
+class "JXTVSTB" {
+  match if substring (option vendor-class-identifier, 0, 8) = "JXCNSTB1";
+  option vendor-class-identifier "JXCNSTB1";
+}
+
+class "Enable_BPI+_MACs" {
+  match if substring (hardware, 1, 5) = 00:1a:9a:dc:4d ;
+}
+class "Enable_BPI+_MACs_1" {
+  match if substring (hardware, 1, 5) = 5c:c6:d0:0e:54 ;
+}
+class "Enable_BPI+_MACs_2" {
+  match if substring (hardware, 1, 4) = 5c:c6:d0:12 ;
+}
+class "Enable_BPI+_MACs_3" {
+  match if substring (hardware, 1, 4) = 5c:c6:d0:19;
+}
+class "Enable_BPI+_MACs_4" {
+  match if substring (hardware, 1, 4) = 5c:c6:d0:1a ;
+}
+class "Enable_BPI+_MACs_5" {
+  match if ( substring (hardware, 1, 4) = 5c:c6:d0:1b )
+or ( substring (hardware, 1, 4) = 5c:c6:d0:1c );
+}
+class "Enable_BPI+_MACs_12" {
+  match if substring (hardware, 1, 4) = 5c:c6:d0:1d ;
+}
+class "Enable_BPI+_MACs_6" {
+  match if substring (hardware, 1, 4) = 5c:c6:d0:e6 ;
+}
+
+class "Enable_BPI+_MACs_9" {
+  match if (substring (hardware, 1, 4) = a0:89:e4:00)
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:0");
+}
+
+class "Enable_BPI+_MACs_10" {
+  match if (substring (hardware, 1, 4) = a0:89:e4:01)
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:1");
+}
+class "Enable_BPI+_MACs_11" {
+  match if (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:2")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:3")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:4")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:5")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:6")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:7")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:8")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:9")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:a")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:b")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:c")
+or (binary-to-ascii (16,8,":",substring(hardware, 1, 4)) = "a0:89:e4:d") ;
+}
+
+class "Wins_DHCP_Server_Unit" {
+ match if (binary-to-ascii (16,8,":",substring(hardware, 1, 8)) = "0:1a:9a:25:30:cc");
+}
+
+shared-network "cm_shared" {
+subnet 10.10.5.0 netmask 255.255.255.0 {
+  #range 10.10.5.10 10.10.5.70;
+  option domain-name-servers 172.28.0.2,172.28.0.3;
+  option domain-name "CM_POOL";
+  option routers 10.10.5.1;
+  #option option-122       01:04:c0:a8:0a:dc:02:04:c0:a8:0a:dc;         # sub-opt 1, DHCP Serv= 192.168.10.220
+  #filename "moto.cfg";
+  option broadcast-address 10.5.5.255;
+  #option tftp-server-name "192.168.10.220";
+  #option bootfile-name    "d30.bin";
+  default-lease-time 43200;
+  max-lease-time 43200;
+  #log (info , option vsi.version);
+  #log (info , option vsi.model);
+  #log (info , option vsi.model_other);
+  #log (info , option vsi.version_other);
+  log (info , binary-to-ascii (16,8,":",substring(hardware, 1, 4)));
+  #log (info , concat ( "Model ", option vsi.model, #option vsi.model_other,
+  #                    " Version ", option vsi.version, #option vsi.version_other,
+  #                    " IP ", binary-to-ascii (10,8,".", leased-address),
+  #                    " MAC ", binary-to-ascii (16,8,":",substring(hardware, 1, 6))));
+  pool  {
+    range 10.10.5.220 10.10.5.250;
+    allow members of "Enable_BPI+_MACs";
+    filename "d30_bpi.bin";
+  }
+  pool  {
+    range 10.10.5.140 10.10.5.170;
+    allow members of "Enable_BPI+_MACs_1";
+    allow members of "Enable_BPI+_MACs_2";
+    allow members of "Enable_BPI+_MACs_3";
+    allow members of "Enable_BPI+_MACs_4";
+    allow members of "Enable_BPI+_MACs_5";
+    allow members of "Enable_BPI+_MACs_6";
+    allow members of "Enable_BPI+_MACs_9";
+    allow members of "Enable_BPI+_MACs_10";
+    allow members of "Enable_BPI+_MACs_11";
+    allow members of "Enable_BPI+_MACs_12";
+    filename "d30_bpi.bin";
+  }
+  pool {
+    #filename "moto.cfg";
+    filename "d30.bin";
+    range 10.10.5.10 10.10.5.120;
+    deny members of "Enable_BPI+_MACs_3";
+    deny members of "Enable_BPI+_MACs_5";
+    deny members of "Enable_BPI+_MACs_9";
+    deny members of "Enable_BPI+_MACs_10";
+    deny members of "Enable_BPI+_MACs_11";
+    deny members of "Enable_BPI+_MACs_12";
+    deny members of "Enable_BPI+_MACs_6";
+    deny members of "Wins_DHCP_Server_Unit";
+  }
+  pool {
+    filename "d30.bin";
+    range 10.10.5.121 10.10.5.139;
+    option tftp-server-name "192.168.10.220";
+    option bootfile-name    "moto.cfg";
+    allow members of "Wins_DHCP_Server_Unit";
+  }
+}
+}
+
+shared-network "test" {
+subnet 192.168.222.0 netmask 255.255.255.0 {
+  option domain-name-servers 172.28.0.2,172.28.0.3;
+  option domain-name "CPE_POOL";
+  option routers 192.168.222.1;
+  filename "moto.cfg";
+  option broadcast-address 192.168.222.255;
+  default-lease-time 43200;
+  max-lease-time 43200;
+  pool {
+    range 192.168.222.100 192.168.222.200;
+    allow members of "JXTVSTB";
+  }
+   
+}
+subnet 10.10.6.0 netmask 255.255.254.0 {
+  #range 10.10.6.10 10.10.6.250;
+  option domain-name-servers 172.28.0.2,192.168.0.59;
+  option domain-name "CPE_POOL";
+  option routers 10.10.6.1;
+  filename "moto.cfg";
+  option broadcast-address 10.5.6.255;
+  default-lease-time 43200;
+  max-lease-time 43200;
+    
+    pool {
+    range 10.10.6.10 10.10.6.99;
+    deny members of "SZTV";
+    deny members of "STB";
+    deny members of "GCableSSID";
+    deny members of "USERSSID";
+    deny members of "CMCCSSID";
+    deny members of "lygcatvstb";
+    }
+    
+    pool {
+    range 10.10.6.100 10.10.6.180;
+    allow members of "SZTV";
+    allow members of "STB";
+    allow members of "lygcatvstb";
+    }
+    pool {
+    range 10.10.7.10 10.10.7.99;
+    allow members of "GCableSSID";
+    option routers 10.10.7.1;
+    }
+    pool {
+    range 10.10.7.100 10.10.7.199;
+    allow members of "USERSSID";
+    option routers 10.10.7.1;
+    }
+    pool {
+    range 10.10.7.200 10.10.7.254;
+    allow members of "CMCCSSID";
+    }
+}
+}
+#eof
